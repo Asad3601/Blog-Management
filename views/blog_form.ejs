@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Form</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="col-sm-7 mt-5">
+            <h2>Blog Form</h2>
+        </div>
+
+        <form action="/blog" method="POST" enctype="multipart/form-data">
+
+            <div class="col-sm-7 mt-3">
+                <label for="email">Blog Title:</label>
+                <input type="text" class="form-control" id="blog_title" name="blog_title">
+            </div>
+            <div class="col-sm-7 mt-3">
+                <label for="description">Blog Description:</label>
+                <textarea class="form-control" id="blog_description" name="blog_description"> </textarea>
+            </div>
+            <div class="col-sm-7 mt-3">
+                <label for="blog_image">Blog Image:</label>
+                <input type="file" class="form-control" id="blog_image" name="blog_image">
+            </div>
+            <div class="col-sm-7 mt-3">
+                <button type="submit" class="btn btn-primary">Create Blog</button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

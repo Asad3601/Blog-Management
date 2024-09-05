@@ -1,0 +1,230 @@
+<div class="container mt-5">
+    <div class="row">
+        <% if(post) { %>
+            <div class="col-lg-8">
+                <!-- Post content-->
+                <article>
+                    <!-- Post header-->
+                    <header class="mb-4">
+                        <!-- Post title-->
+                        <h1 class="fw-bolder mb-1">
+                            <%= post.post_title %>
+                        </h1>
+                        <!-- Post meta content-->
+                        <div class="text-muted fst-italic mb-2">Posted By Admin on
+                            <%= post.createdAt.toLocaleString('en-US') %>
+                        </div>
+                    </header>
+                    <!-- Preview image figure-->
+                    <figure class="mb-4">
+                        <img class="img-fluid rounded" style="width:500px; height: 300px;" src="/post_images/<%= post.post_image %>" alt="..." />
+                    </figure>
+                    <!-- Post content-->
+                    <section class="mb-5">
+                        <p class="fs-5 mb-4">
+                            <%=post.post_content%>
+                        </p>
+                    </section>
+                </article>
+
+                <!-- Comments section-->
+                <section class="mb-5">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <!-- Comment form-->
+                            <h3>Leave A Comment</h3>
+                            <form class="mb-4" id="comment-form">
+                                <input type="hidden" name="post_id" value="<%= post._id %>">
+                                <textarea class="form-control" rows="3" name="comment" placeholder="Enter Your Comment"></textarea>
+                                <input type="submit" class="btn btn-primary mt-2" value="Add Comment">
+                                <span><b class="m-t-10 ml-2" style="color: green;" id="msg"></b></span>
+                            </form>
+
+                            <!-- Comments will be appended here -->
+                            <div id="comments-section"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <% } %>
+                <!-- Side widgets-->
+                <div class="col-lg-4">
+                    <!-- Additional widgets can go here -->
+                </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Fetch all comments for the post on page load
+        fetchComments();
+
+        // Handle comment form submission
+        $('#comment-form').submit(function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            let formData = $(this).serialize(); // Serialize the form data
+            let msg = document.querySelector('#msg');
+
+            $.ajax({
+                url: '/add-comment',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    msg.innerText = response.message;
+                    setTimeout(() => {
+                        msg.innerText = '';
+                    }, 3000);
+                    // Optionally, refresh comments after adding a new one
+                    // alert(response.currentUserId);
+
+                    fetchComments();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login_form'; // Redirect if not logged in
+                    } else {
+                        console.error('Error adding comment:', xhr.responseJSON.message);
+                    }
+                }
+            });
+        });
+
+        function fetchComments(currentUser) {
+            let postId = $('input[name="post_id"]').val();
+
+            $.ajax({
+                url: '/comments',
+                type: 'POST',
+                data: {
+                    post_id: postId
+                },
+                success: function(response) {
+                    let commentsSection = $('#comments-section');
+                    commentsSection.empty(); // Clear existing comments
+
+                    response.comments.forEach(comment => {
+                        let repliesHtml = '';
+                        comment.replies.forEach(reply => {
+                            repliesHtml += `
+                    <div class="d-flex mt-2">
+                        <div class="flex-shrink-0">
+                            <img class="rounded-circle" src="${reply.user.image}" alt="" />
+                        </div>
+                        <div class="ms-3 w-100">
+                            <div class="fw-bold">${reply.user.username}</div>
+                            <div>${reply.reply}</div>
+                            <hr>
+                        </div>
+                    </div>`;
+                        });
+
+                        let commentHtml = `
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <img class="rounded-circle" src="${comment.user.image}" alt="" />
+                    </div>
+                    <div class="ms-3 w-100">
+                        <div class="fw-bold">${comment.user.username}</div>
+                        <div>${comment.comment}</div>
+                        <div class="mt-2">
+                            <a href="#" class="text-primary me-3 reply-link">Reply</a>
+                            <a href="#" class="text-primary like-link">Like</a>
+                        </div>
+                        <span><b class="ml-2 text-success reply-msg"></b></span> <!-- Updated with class -->
+                        <div class="replies mt-2">${repliesHtml}</div>
+                        <div class="reply-form mt-2 d-none">
+                            <form class="ajax-reply-form">
+                                <textarea class="form-control mb-2" name="reply" rows="3" placeholder="Write your reply..."></textarea>
+                                <input type="hidden" name="commentId" value="${comment._id}" />
+                                <input type="hidden" name="userId" value="${response.currentUserId || ''}" />
+                                <button type="submit" class="btn btn-primary btn-sm submit-reply">Submit Reply</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <hr>`;
+
+                        commentsSection.append(commentHtml);
+                    });
+
+                    // Event listener for showing the reply textarea and submit button
+                    $('.reply-link').on('click', function(e) {
+                        e.preventDefault();
+                        $(this).closest('.d-flex').find('.reply-form').toggleClass('d-none');
+                    });
+
+                    // Event listener for submitting the reply form via AJAX
+                    $('.ajax-reply-form').on('submit', function(e) {
+                        e.preventDefault(); // Prevent the default form submission
+
+                        let form = $(this);
+                        let formData = form.serialize(); // Serialize the form data
+                        let replyMsg = form.closest('.d-flex').find('.reply-msg'); // Select based on class
+
+                        $.ajax({
+                            url: '/submit-reply',
+                            type: 'POST',
+                            data: formData,
+                            success: function(response) {
+                                replyMsg.text(response.message).fadeIn(); // Show the success message
+                                setTimeout(() => {
+                                    replyMsg.fadeOut(); // Hide the message after 3 seconds
+                                }, 3000);
+                                let updatedCommentHtml = generateCommentHtml(response.comment);
+                                form.closest('.d-flex').replaceWith(updatedCommentHtml);
+                            },
+                            error: function(xhr) {
+                                if (xhr.status === 401) {
+                                    window.location.href = '/login_form'; // Redirect if not logged in
+                                } else {
+                                    console.error('Error reply comment:', xhr.responseJSON.message);
+                                }
+                            }
+                        });
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error fetching comments:', xhr.responseJSON.message);
+                }
+            });
+        }
+
+
+
+    });
+
+    function generateCommentHtml(comment) {
+        let commentHtml = `
+        <div class="d-flex mb-4">
+            <div class="flex-shrink-0">
+                <img class="rounded-circle" src="${comment.user.image}" alt="" />
+            </div>
+            <div class="ms-3 w-100">
+                <div class="fw-bold">${comment.user.username}</div>
+                <div>${comment.comment}</div>
+                <div class="mt-2">
+                    <a href="#" class="text-primary me-3 reply-link">Reply</a>
+                    <a href="#" class="text-primary like-link">Like</a>
+                </div>
+                <div class="replies mt-2">
+                    ${comment.replies.map(reply => `
+                        <div class="d-flex mt-2">
+                            <div class="flex-shrink-0">
+                                <img class="rounded-circle" src="${reply.user.image}" alt="" />
+                            </div>
+                            <div class="ms-3 w-100">
+                                <div class="fw-bold">${reply.user.username}</div>
+                                <div>${reply.reply}</div>
+                            </div>
+                        </div>
+                        <hr>
+                    `).join('')}
+                    
+                </div>
+                
+            </div>
+        </div>
+        `;
+    return commentHtml;
+}
+</script>

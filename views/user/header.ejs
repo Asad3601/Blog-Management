@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container px-5">
+        <a class="navbar-brand" href="#!"> <strong>Blog Management System</strong></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0" style="color: white;">
+                <li class="nav-item"><a class="nav-link " aria-current="page" href="#!">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="#!">About</a></li>
+                <li class="nav-item"><a class="nav-link" href="#!">Contact</a></li>
+                <% if (session.user) { %>
+                    <li class="nav-item dropdown" style="margin-left: 20px; margin-right: 0px;">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img src="<%=session.user.image %>" alt="<%= session.user.username %>" width="30" height="30" class="rounded-circle">
+                            
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="/profile">Profile</a>
+                            <a class="dropdown-item" href="/logout">Logout</a>
+
+                        </div>
+                    </li>
+                    <% } else { %>
+                        <li class="nav-item"><a class="nav-link" href="/login_form">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/register_form">Register</a></li>
+                        <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>

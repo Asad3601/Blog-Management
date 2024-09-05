@@ -1,0 +1,19 @@
+<div class="container px-4 px-lg-5">
+    <% if(posts.length>0) { %>
+        <!-- Heading Row-->
+        <% posts.forEach(item=>{ %>
+            <div class="row gx-4 gx-lg-5 align-items-center my-5">
+                <div class="col-lg-7"><img class="img-fluid rounded mb-4 mb-lg-0" src="/post_images/<%=item.post_image %>" alt="..." style="width:500px; height: 300px;" /></div>
+                <div class="col-lg-5">
+                    <h1 class="font-weight-light">
+                        <%=item.post_title%>
+                    </h1>
+                    <%=item.post_content%>
+                        <p></p>
+                        <a class="btn btn-primary" href="/blogs/blog_detail/<%- item._id %>">Read More!</a>
+                </div>
+            </div>
+            <hr>
+            <% }) %>
+                <% } %>
+</div>
